@@ -2,6 +2,11 @@ const File = require('../models/File');
 const cloudinary = require('cloudinary').v2;
 
 //localFileupload handler function
+
+let isSupportedType = (fileType, supportedTypes) => {
+    return supportedTypes.includes(fileType)
+}
+
 exports.localFileUpload = async (req, res) => {
 
     try {
@@ -38,14 +43,14 @@ exports.localFileUpload = async (req, res) => {
 
 
 }
-let isSupportedType = (fileType, supportedTypes) => {
-    return supportedTypes.includes(fileType)
-}
 
-async function uploadFileToCloudinary(file, folder) {
+async function uploadFileToCloudinary(file, folder, quality) {
     const options = {
         folder,
-        resource_type:"auto"
+        resource_type: "auto"
+    }
+    if(quality){
+        options.quality= quality;
     }
     return await cloudinary.uploader.upload(file.tempFilePath, options)
 
@@ -104,42 +109,42 @@ exports.videoUpload = async (req, res) => {
 
     try {
 
-        const {name, email, tags}=req.body;
+        const { name, email, tags } = req.body;
 
-        const videoFile=req.files.videoFile;
+        const videoFile = req.files.videoFile;
         console.log(videoFile);
-        const fileType=videoFile.name.split('.')[1].toLowerCase();
+        const fileType = videoFile.name.split('.')[1].toLowerCase();
 
-        const supportedTypes=["mp4", "mov"];
+        const supportedTypes = ["mp4", "mov"];
 
-        if(!isSupportedType(fileType,supportedTypes)){
+        if (!isSupportedType(fileType, supportedTypes)) {
             return res.status(400).json(
                 {
-                    success:false,
-                    message:"unsupported file format"
+                    success: false,
+                    message: "unsupported file format"
                 }
             )
         }
 
-        const response=await uploadFileToCloudinary(videoFile,"babbar");
+        const response = await uploadFileToCloudinary(videoFile, "babbar");
         console.log(response);
 
         //DB mein entry create
 
-        const entryInDb=await File.create({
-            email,name,tags,
-            imageUrl:response.secure_url
+        const entryInDb = await File.create({
+            email, name, tags,
+            imageUrl: response.secure_url
         })
 
         return res.status(200).json(
             {
-                succdess:true,
-                message:"Video successfully uploaded"
+                succdess: true,
+                message: "Video successfully uploaded"
             }
         )
 
 
-        
+
 
     }
     catch (err) {
@@ -148,8 +153,51 @@ exports.videoUpload = async (req, res) => {
         return res.status(400).json(
             {
                 success: false,
-                videoUrl:response.secure_url,
+                videoUrl: response.secure_url,
                 message: "Some error occured"
+            }
+        )
+    }
+}
+
+exports.imageSizeReducer = async (req, res) => {
+    try {//data fetch karo
+        const { name, email, tags } = req.body;
+        console.log(name, email, tags);
+        const file = req.files.imageFile;
+        console.log(file);
+
+        //validations 
+        const supportedFileTypes = ["jpg", "jpeg", "png"];
+        fileType = file.name.split('.')[1].toLowerCase();
+        if (!isSupportedType(fileType, supportedFileTypes)) {
+            return res.status(400).json(
+                {
+                    success: false,
+                    message: "Invalid File Type",
+                }
+            )
+        }
+
+        //file validated now upload to cloudinary
+        const response = await uploadFileToCloudinary(file, "babbar", 20)
+        console.log("Uploaded File is :", response);
+
+        res.status(200).json(
+            {
+                success: true,
+                message: "File Uploaded successfully",
+            }
+        )
+
+
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json(
+            {
+                success: false,
+                message: "Some error encountered "
             }
         )
     }
