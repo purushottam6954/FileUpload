@@ -183,6 +183,13 @@ exports.imageSizeReducer = async (req, res) => {
         const response = await uploadFileToCloudinary(file, "babbar", 20)
         console.log("Uploaded File is :", response);
 
+
+        //creating entry in DB
+        const filedata=await File.create(
+            {
+                name,email,tags,imageUrl:response.secure_url
+            }
+        )
         res.status(200).json(
             {
                 success: true,
