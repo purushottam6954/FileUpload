@@ -187,7 +187,8 @@ exports.imageSizeReducer = async (req, res) => {
         //creating entry in DB
         const filedata=await File.create(
             {
-                name,email,tags,imageUrl:response.secure_url
+                name,email,tags,
+                imageUrl:response.secure_url
             }
         )
         res.status(200).json(

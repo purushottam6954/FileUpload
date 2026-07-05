@@ -24,6 +24,8 @@ const fileSchema = new mongoose.Schema(
     }
 )
 
+//Sending a confirmation mail after document is created on File DB
+
 fileSchema.post("save", async (doc) => {
     try {
         console.log("Doc", doc)
